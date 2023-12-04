@@ -1,0 +1,11 @@
+[Unit]
+Description=Displaying the current temperature on the Deepcool box
+
+[Service]
+Type=simple
+User=root
+ExecStart= /usr/bin/python3 /usr/bin/deepcool-digital-info.py
+Restart=always
+
+[Install]
+WantedBy=default.target

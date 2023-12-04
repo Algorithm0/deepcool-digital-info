@@ -5,13 +5,15 @@ import hid
 
 VENDOR_ID = 0x34d3
 PRODUCT_ID = 0x1100
+INTERVAL = 1
 
 
 if platform == "linux" or platform == "linux2":
-    print("linux")
+    import psutil
     def get_temperature():
-        return 40.3
+        return psutil.sensors_temperatures()['k10temp'][0].current
 elif platform == "win32":
+    #out fake temp
     def get_temperature():
         return 60
 
@@ -26,7 +28,7 @@ try:
         b = bytearray()
         b.extend(map(ord, f"_HLXDATA(0,{get_temperature()},0,0,C)"))
         h.write(b)
-        time.sleep(0.5)
+        time.sleep(INTERVAL)
 
 except IOError as ex:
    print(ex)
