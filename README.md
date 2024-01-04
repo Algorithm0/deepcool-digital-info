@@ -17,7 +17,8 @@ If you get some output on the display, but the data is incorrect, then you will 
     def get_temperature():
         return psutil.sensors_temperatures()['k10temp'][0].current
 ```
-## Installation
+
+## Installation and Update
 When you got what you wanted, just run the internal script. The service will turn on automatically after your PC starts and restart after it sleeps.
 ```shell
 ./install.sh
