@@ -25,8 +25,9 @@ try:
     h.set_nonblocking(1)
 
     while True:
+        temp = get_temperature()
         b = bytearray()
-        b.extend(map(ord, f"_HLXDATA(0,{get_temperature()},0,0,C)"))
+        b.extend(map(ord, f"_HLXDATA({temp},{temp},0,0,C)"))
         h.write(b)
         time.sleep(INTERVAL)
 
