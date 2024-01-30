@@ -7,16 +7,14 @@ VENDOR_ID = 0x34d3
 PRODUCT_ID = 0x1100
 INTERVAL = 1
 
-
-if platform == "linux" or platform == "linux2":
-    import psutil
-    def get_temperature():
+def get_temperature():
+    if platform == "linux" or platform == "linux2":
+        #In this case, a method is called that returns the temperature of my processor.
+        import psutil
         return psutil.sensors_temperatures()['k10temp'][0].current
-elif platform == "win32":
-    #out fake temp
-    def get_temperature():
+    else:
+        #out fake temp
         return 60
-
 
 try:
     h = hid.device()
@@ -33,6 +31,4 @@ try:
 
 except IOError as ex:
    print(ex)
-   print("You probably don't have the hard-coded device.")
-   print("Update the h.open() line in this script with the one")
-   print("from the enumeration list output above and try again.")
+   print("Failed to open device for writing. Either you are using the wrong device (incorrect VENDOR_ID/PRODUCT_ID), or you need superuser rights.")

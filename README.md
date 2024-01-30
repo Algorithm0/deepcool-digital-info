@@ -13,9 +13,12 @@ sudo python3 deepcool-digital-info.py
 ```
 If you get some output on the display, but the data is incorrect, then you will have to fiddle with how to obtain the temperature data. Study this place in the script and change it so that it works.
 ```python
-    import psutil
-    def get_temperature():
+def get_temperature():
+    if platform == "linux" or platform == "linux2":
+        #In this case, a method is called that returns the temperature of my processor.
+        import psutil
         return psutil.sensors_temperatures()['k10temp'][0].current
+        ...
 ```
 
 ## Installation and Update
