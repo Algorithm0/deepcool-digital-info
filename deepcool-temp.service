@@ -1,10 +1,10 @@
 [Unit]
-Description=Displaying the current temperature on the Deepcool box
+Description=Deepcool Digital service with temp and utils
 
 [Service]
 Type=simple
 User=root
-ExecStart= /usr/bin/python3 /usr/bin/deepcool-digital-info.py
+ExecStart= /usr/bin/python3 /usr/local/bin/deepcool-digital-info.py -j /usr/local/share/applications/deepcool-devices.json5
 Restart=always
 
 [Install]

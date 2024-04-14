@@ -31,16 +31,18 @@ parser = argparse.ArgumentParser(
                 'is tailored exclusively for the developer’s equipment; work on other devices is not '
                 'guaranteed, but you can always make your own changes. Use root access to access the '
                 'device')
-parser.add_argument('-d', '--device', choices=list(DEVICES.keys()), nargs='?', help='Select your device. If it is '
-                                                                                    'not in the list, then select '
-                                                                                    '“CUSTOM”',
-                    default=CUR_DEVICE)
+parser.add_argument('-d', '--device', nargs='?',
+                    help='select your device name in json (--json-devices req)', default=CUR_DEVICE)
 parser.add_argument('-i', '--interval', type=int, nargs='?', help='display refresh timing in seconds', default=INTERVAL)
+parser.add_argument('-j', '--json-devices', nargs='?', help='path to the device configuration file in the form of a '
+                                                            'json-file', default=None)
 parser.add_argument('-s', '--sensor', default=SENSOR, nargs='?', type=str)
 parser.add_argument('-m', '--simple', action='store_true',
                     help="specify if using simple data sending mode (if "
                          "your device is on the list, don't worry about "
                          "it)", default=None)
+parser.add_argument('-t', '--test', action='store_true',
+                    help="send random values to the device, ignoring sensor values")
 parser.add_argument('-v', '--vendor', type=lambda x: int(x, 0), nargs='?',
                     help="provide a specific VENDOR_ID (if your device is listed, "
                          "don't worry about it)", default=None)
@@ -52,12 +54,36 @@ args = parser.parse_args()
 INTERVAL = args.interval
 SENSOR = args.sensor
 CUR_DEVICE = args.device
+TST_MODE = args.test
+
+if args.json_devices is not None:
+    custom_device = DEVICES["CUSTOM"]
+    DEVICES.clear()
+    import os.path
+    if not os.path.isfile(args.json_devices):
+        print("Device configuration file not found")
+        exit(1)
+    import json5
+    with open(args.json_devices) as f:
+        json_devices = json5.load(f)
+        try:
+            for device in json_devices["devices"]:
+                DEVICES[device["name"]] = DeviceInfo(device["vendor_id"], device["product_id"], device["simple"])
+        except KeyError:
+            print("Device configuration file has wrong format")
+            exit(1)
+    DEVICES["CUSTOM"] = custom_device
+
 if args.simple is not None:
     DEVICES[CUR_DEVICE].SIMPLE_MODE = True
 if args.vendor is not None:
     DEVICES[CUR_DEVICE].VENDOR_ID = args.vendor
 if args.product is not None:
     DEVICES[CUR_DEVICE].PRODUCT_ID = args.product
+
+
+if TST_MODE:
+    from random import randint
 
 
 def get_bar_value(input_value):
@@ -107,6 +133,12 @@ def get_cpu_temperature(label="CPU"):
 
 
 def get_temperature():
+    if TST_MODE:
+        temp_rand = randint(45, 95)
+        if DEVICES[CUR_DEVICE].SIMPLE_MODE:
+            return get_data(value=temp_rand, mode='simple')
+        else:
+            return get_data(value=temp_rand, mode='temp')
     try:
         temp_sensor = round(psutil.sensors_temperatures()[SENSOR][0].current)
     except KeyError:
@@ -118,6 +150,8 @@ def get_temperature():
 
 
 def get_utils():
+    if TST_MODE:
+        return get_data(value=randint(0, 100), mode='util')
     utils_data = round(psutil.cpu_percent())
     return get_data(value=utils_data, mode='util')
 

@@ -1,0 +1,22 @@
+{
+  "devices": [
+    {
+      "name": "CH510",
+      "vendor_id": 0x34d3,
+      "product_id": 0x1100,
+      "simple": true
+    },
+    {
+      "name": "AK620",
+      "vendor_id": 0x3633,
+      "product_id": 0x0002,
+      "simple": false
+    },
+    {
+      "name": "AK400",
+      "vendor_id": 0x3633,
+      "product_id": 0x0001,
+      "simple": false
+    }
+  ]
+}
