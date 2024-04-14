@@ -8,6 +8,7 @@ import argparse
 
 CUR_DEVICE = "CUSTOM"
 SENSOR = 'k10temp'
+SENSOR_INDEX = 0
 INTERVAL = 1
 
 
@@ -37,6 +38,7 @@ parser.add_argument('-i', '--interval', type=int, nargs='?', help='display refre
 parser.add_argument('-j', '--json-devices', nargs='?', help='path to the device configuration file in the form of a '
                                                             'json-file', default=None)
 parser.add_argument('-s', '--sensor', default=SENSOR, nargs='?', type=str)
+parser.add_argument('-z', '--sensor-index', default=SENSOR_INDEX, nargs='?', type=int)
 parser.add_argument('-m', '--simple', action='store_true',
                     help="specify if using simple data sending mode (if "
                          "your device is on the list, don't worry about "
@@ -53,6 +55,7 @@ parser.add_argument('-p', '--product', type=lambda x: int(x, 0), nargs='?',
 args = parser.parse_args()
 INTERVAL = args.interval
 SENSOR = args.sensor
+SENSOR_INDEX = args.sensor_index
 CUR_DEVICE = args.device
 TST_MODE = args.test
 
@@ -140,7 +143,7 @@ def get_temperature():
         else:
             return get_data(value=temp_rand, mode='temp')
     try:
-        temp_sensor = round(psutil.sensors_temperatures()[SENSOR][0].current)
+        temp_sensor = round(psutil.sensors_temperatures()[SENSOR][SENSOR_INDEX].current)
     except KeyError:
         temp_sensor = get_cpu_temperature()
     if DEVICES[CUR_DEVICE].SIMPLE_MODE:

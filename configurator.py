@@ -1,5 +1,6 @@
 #!/bin/python3
 import stat
+import subprocess
 from subprocess import Popen
 
 import click
@@ -14,6 +15,8 @@ if not click.confirm("Let's try. First, all necessary Python packages will be ch
 modulesOk = True
 try:
     import psutil
+
+    sensors = psutil.sensors_temperatures()
 except ImportError:
     print("This project needs 'psutil' module. Please install it first. It is recommended to use the system package "
           "for your OS")
@@ -83,7 +86,15 @@ def selectNum(max, text):
 
 
 print("All modules are installed! Great! Well, let's now try to identify your device!")
-json_devices_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'devices.json5'))
+json_devices_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'user-devices.json5'))
+reedCustom = os.path.isfile(json_devices_file)
+if reedCustom:
+    reedCustom = click.confirm("It seems that you have already visited us! A custom device configuration file was "
+                               "detected. To use him?", default=True)
+
+if not reedCustom:
+    json_devices_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'devices.json5'))
+
 index = 1
 with open(json_devices_file) as f:
     json_devices = json5.load(f)
@@ -99,7 +110,7 @@ print("0 I think I forgot to turn off the iron! (Go out)")
 
 selected = selectNum(index, 'Please select')
 
-TARGET_ARGS = ""
+TARGET_ARGS = []
 
 base_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'deepcool-digital-info.py'))
 check = False
@@ -111,7 +122,8 @@ if selected != index:
     running_procs.kill()
     if check:
         print("Hooray! I congratulate you! The worst is over! Let's now make the information meaningful!")
-        TARGET_ARGS = f"-d {json_devices["devices"][selected - 1]["name"]}"
+        TARGET_ARGS.append("-d")
+        TARGET_ARGS.append(json_devices["devices"][selected - 1]["name"])
     else:
         print("It's a pity... It's really strange. But let's try to move on to manual configuration")
 
@@ -153,10 +165,11 @@ def tryDevice():
         running_procs.kill()
         if check:
             print("Hooray! I congratulate you! The worst is over! Let's now make the information meaningful!")
-            userDeviceName = click.prompt("Please enter the model number of your device (similar to CH510, AK400). If "
-                                          "your device was already on the list, then add some prefix (AK400-2)",
-                                          type=str)
-            json_devices["devices"].append({'name': userDeviceName,
+            newUserDeviceName = click.prompt(
+                "Please enter the model number of your device (similar to CH510, AK400). If "
+                "your device was already on the list, then add some prefix (AK400-2)",
+                type=str)
+            json_devices["devices"].append({'name': newUserDeviceName,
                                             'vendor_id': device_list[selectedHid - 1]['vendor_id'],
                                             'product_id': device_list[selectedHid - 1]['product_id'],
                                             'simple': (selectedMode == 2)})
@@ -164,7 +177,7 @@ def tryDevice():
             with open(new_json, "w") as write:
                 json5.dump(json_devices, write, sort_keys=True, indent=4)
             os.chmod(new_json, stat.S_IRWXO)
-            break
+            return newUserDeviceName
         else:
             print("It's a pity... It's really strange. But let's try to move on to manual configuration")
 
@@ -177,7 +190,77 @@ if selected == index or not check:
     if click.confirm("Do you want to exit the configuration script?", default=False):
         print("See you!")
         exit(1)
-    tryDevice()
+    TARGET_ARGS.clear()
+    TARGET_ARGS.append("-d")
+    TARGET_ARGS.append(tryDevice())
+    reedCustom = True
 
 print("And so, then everything should be simpler. We will look at the temperature sensors that we were able to detect "
       "and select something suitable.")
+
+
+def showSensors():
+    sensors = psutil.sensors_temperatures()
+    index_sensor = 0
+    for base in sensors:
+        print(f"  {base}:")
+        for sensor in sensors[base]:
+            index_sensor += 1
+            if not sensor.label:
+                print(f"{index_sensor}     EMPTY_LABEL: {sensor.current}°C")
+                continue
+            print(f"{index_sensor}     {sensor.label}: {sensor.current}°C")
+    return index_sensor
+
+
+selected = 0
+while True:
+    print()
+    index = showSensors() + 1
+    print()
+    print(f"{index}     Update")
+    print("0     Exit from configurator")
+    selected = selectNum(index, 'Please select variant')
+    if selected != index:
+        break
+
+
+selected -= 1
+index = 0
+sensor = ""
+sensor_index = 0
+for base in sensors:
+    index += len(sensors[base])
+    if index > selected:
+        sensor = base
+        sensor_index = selected - (index - len(sensors[base]))
+        break
+
+print("Selected sensor: ", sensor)
+print(sensors[sensor][sensor_index])
+
+TARGET_ARGS.append("-s")
+TARGET_ARGS.append(sensor)
+TARGET_ARGS.append("-z")
+TARGET_ARGS.append(f"{sensor_index}")
+if reedCustom:
+    TARGET_ARGS.append("-u")
+
+if click.confirm("And so, it seems we are ready to install! Call the uninstall script? This will be a good idea if you are using "
+      "an older version of the installation.", default=False):
+    remove_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'remove.sh'))
+    subprocess.run([remove_script])
+    print("Done.")
+
+if click.confirm("Now let's run the installation script. Launch?", default=True):
+    install_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'install.sh'))
+    TARGET_ARGS.insert(0, install_script)
+    subprocess.run(TARGET_ARGS)
+    print("Done.")
+
+print("If you see any errors during the uninstallation and installation run, then don’t worry - most likely these are "
+      "just attempts to remove something that doesn’t exist.")
+print("This completes the setup. Enjoy using it!")
+if reedCustom:
+    print("Since you found your new device, which was not previously on the list, please provide the relevant "
+          "information if it’s not difficult for you here: https://github.com/Algorithm0/deepcool-digital-info/issues/2")
