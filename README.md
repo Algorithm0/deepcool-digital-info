@@ -59,6 +59,6 @@ All program data has been tested and verified on several configurations, nothing
 But if you have specific equipment, specific behavior or, for example, hands, then I cannot help you.
 I'm just giving you a tool. Its use on the highest level of advice.
 
-## Assistants
+## Deposits
  - https://github.com/raghulkrishna - implementation of the dual mode algorithm 
 (marked as `complex` in the configurator)
