@@ -1,31 +1,64 @@
 # Temperature display for Deepcool Digital USB-devices on Linux
-This project provides support for **Deepcool Digital** for Linux OS. The Python script is tailored exclusively for the developer’s equipment; work on other devices is not guaranteed, but you can always make your own changes.
+This project provides support for **Deepcool Digital** for Linux OS. The Python3 script is tailored
+exclusively for the developer’s equipment;
+work on other devices is not guaranteed, but you can always make your own changes.
 
-## Dependencies
-- python3
-- python3-hidapi (*Look for this package in the repositories of your OS, the module can also be installed via PIP, but then it must be installed by the root user*)
-- python3-psutil (*It is better to install the package from other repositories as well. It is necessary to read the processor temperature. You can use something of your own if you want to use other sensors (for example, a GPU sensor).*)
+## Python package dependencies
 
-## Сonfiguration
-You can find your device using the utility _lsusb_ (`lsusb -v`). You need to find VendorID and ProductID. Enter this data at the beginning of the Python script in the appropriate fields. After that, test your device by running the script as root.
-```shell
-sudo python3 deepcool-digital-info.py
-```
-If you get some output on the display, but the data is incorrect, then you will have to fiddle with how to obtain the temperature data. Study this place in the script and change it so that it works.
-```python
-def get_temperature():
-    if platform == "linux" or platform == "linux2":
-        #In this case, a method is called that returns the temperature of my processor.
-        import psutil
-        return psutil.sensors_temperatures()['k10temp'][0].current
-        ...
-```
+### Base
+- `hidapi`
+- `psutil`
+- `json5`
 
-## Installation and Update
-When you got what you wanted, just run the internal script. The service will turn on automatically after your PC starts and restart after it sleeps.
-```shell
-./install.sh
-```
+### Configurator
+- `stat`
+- `subprocess`, `subprocess.Popen`
+- `click`
 
-## Tested Configuration
-- Fedora 39, AMD Rayzen 7 7800X3D, Deepcool ch510 Mesh Digital
+### Some information about installing packages
+It is not recommended to use PIP as an installer of these dependencies, since here you can miss the user access
+(for example, the superuser from whom this service will be launched may not have access to them).
+For this reason, it is better to follow the installation path from your distribution's repository. For example,
+for Fedora it looks something like this:
+~~~shell
+sudo dnf install python-json5 python-hidapi python-hidapi
+~~~
+
+## Configuration and Install
+For configuration, it is now enough to run the configurator script as a superuser. Just make sure that the dependencies
+of at least the configurator itself are satisfied.
+
+So. You want to install this project for yourself. Just do this:
+~~~shell
+git clone https://github.com/Algorithm0/deepcool-digital-info.git
+cd deepcool-digital-info
+sudo ./configurator.py
+~~~
+Carefully monitor the output of the configurator when setting up your equipment. I hope everything works out for you!
+
+## What do this thing do?
+- [x] Displays CPU temperature on tested devices
+- [x] Displays CPU usage information on tested devices
+- [ ] Displays GPU temperature on tested devices
+- [ ] Displays GPU usage information on tested devices
+- [x] Launches when the computer starts up
+- [x] Restarts after sleep
+- [ ] Works with multiple devices
+- [ ] Has a visual interface
+
+## What devices are supported?
+Unfortunately, it is impossible to try the configuration of a particular device without having it in hand. 
+But you can always try your device! Run the configurator and maybe you will get something!
+If you were able to configure your device, which was not previously on the list, then please write about it 
+[here](https://github.com/Algorithm0/deepcool-digital-info/issues/2).
+
+A list of currently supported devices can be found [here](devices.json5).
+
+## Denial of responsibility
+All program data has been tested and verified on several configurations, nothing critical has happened. 
+But if you have specific equipment, specific behavior or, for example, hands, then I cannot help you.
+I'm just giving you a tool. Its use on the highest level of advice.
+
+## Assistants
+ - https://github.com/raghulkrishna - implementation of the dual mode algorithm 
+(marked as `complex` in the configurator)

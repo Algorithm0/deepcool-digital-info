@@ -2,7 +2,6 @@
 import stat
 import subprocess
 from subprocess import Popen
-
 import click
 
 print("Hello! This script should help you configure the program.")
