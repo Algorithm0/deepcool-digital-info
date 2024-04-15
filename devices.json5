@@ -17,6 +17,18 @@
       "vendor_id": 0x3633,
       "product_id": 0x0001,
       "simple": false
+    },
+    {
+      "name": "AK500S",
+      "vendor_id": 0x3633,
+      "product_id": 0x0004,
+      "simple": false
+    },
+    {
+      "name": "AK500",
+      "vendor_id": 0x3633,
+      "product_id": 0x0003,
+      "simple": false
     }
   ]
 }
