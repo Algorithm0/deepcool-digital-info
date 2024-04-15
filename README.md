@@ -36,7 +36,7 @@ sudo ./configurator.py
 ~~~
 Carefully monitor the output of the configurator when setting up your equipment. I hope everything works out for you!
 
-## What do this thing do?
+## What does this thing do?
 - [x] Displays CPU temperature on tested devices
 - [x] Displays CPU usage information on tested devices
 - [ ] Displays GPU temperature on tested devices
