@@ -35,7 +35,7 @@ sudo systemctl stop deepcool-temp.service
 sudo cp -f deepcool-temp.service /lib/systemd/system/
 sudo sed -i "s|ExecStart= /usr/bin/python3 /usr/local/bin/deepcool-digital-info.py -j /usr/local/share/applications/deepcool-devices.json5|ExecStart= /usr/bin/python3 /usr/local/bin/deepcool-digital-info.py -j /usr/local/share/applications/deepcool-devices.json5${ARGS}|g" /lib/systemd/system/deepcool-temp.service
 sudo cp -f deepcool-temp-restart.service /lib/systemd/system/
-sudo cp -f deepcool-digital-info.py /usr/local/bin/deepcool-digital-info.py
+sudo cp -f deepcool.py /usr/local/bin/deepcool-digital-info.py
 sudo mkdir -p /usr/local/share/applications
 
 if [ "${USER_CONFIG}" -eq 1 ] && [ -f user-devices.json5 ]; then

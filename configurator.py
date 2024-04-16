@@ -117,7 +117,7 @@ selected = selectNum(index, 'Please select')
 
 TARGET_ARGS = []
 
-base_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'deepcool-digital-info.py'))
+base_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'deepcool.py'))
 check = False
 if selected != index:
     running_procs = Popen(
