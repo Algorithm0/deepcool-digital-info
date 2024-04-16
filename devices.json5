@@ -1,5 +1,11 @@
 {
   "devices": [
+//    {
+//      "name": "CH560",
+//      "vendor_id": 0x3633,
+//      "product_id": 0x0005,
+//      "simple": true
+//    },
     {
       "name": "CH510",
       "vendor_id": 0x34d3,
