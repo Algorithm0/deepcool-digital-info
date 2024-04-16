@@ -63,10 +63,12 @@ if args.json_devices is not None:
     custom_device = DEVICES["CUSTOM"]
     DEVICES.clear()
     import os.path
+
     if not os.path.isfile(args.json_devices):
         print("Device configuration file not found")
         exit(1)
     import json5
+
     with open(args.json_devices) as f:
         json_devices = json5.load(f)
         try:
@@ -84,7 +86,6 @@ if args.vendor is not None:
 if args.product is not None:
     DEVICES[CUR_DEVICE].PRODUCT_ID = args.product
 
-
 if TST_MODE:
     from random import randint
 
@@ -93,11 +94,11 @@ def get_bar_value(input_value):
     return (input_value - 1) // 10 + 1
 
 
-def get_data(value=0, mode='util'):
-    if mode == 'simple':
-        simple_data = bytearray()
-        simple_data.extend(map(ord, f"_HLXDATA({value},{value},0,0,C)"))
-        return simple_data
+def сelsius_to_fahrenheit(input_value):
+    return round(input_value * 1.8 + 32)
+
+
+def get_data_complex(value=0, mode='util'):
     base_data = [16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     numbers = [int(char) for char in str(value)]
@@ -126,6 +127,15 @@ def get_data(value=0, mode='util'):
     return base_data
 
 
+def get_data_simple(usage: int = 0, temp_c: int = 0, use_fahrenheit: bool = False):
+    simple_data = bytearray()
+    if use_fahrenheit:
+        simple_data.extend(map(ord, f"_HLXDATA({usage},{сelsius_to_fahrenheit(temp_c)},0,0,F)"))
+    else:
+        simple_data.extend(map(ord, f"_HLXDATA({usage},{temp_c},0,0,C)"))
+    return simple_data
+
+
 def get_cpu_temperature(label="CPU"):
     sensors = psutil.sensors_temperatures()
     for sensor_label, sensor_list in sensors.items():
@@ -135,28 +145,22 @@ def get_cpu_temperature(label="CPU"):
     return 0
 
 
-def get_temperature():
-    if TST_MODE:
-        temp_rand = randint(45, 95)
-        if DEVICES[CUR_DEVICE].SIMPLE_MODE:
-            return get_data(value=temp_rand, mode='simple')
-        else:
-            return get_data(value=temp_rand, mode='temp')
+def get_temperature(is_test: bool = False):
+    if is_test:
+        return randint(45, 95)
+
     try:
         temp_sensor = round(psutil.sensors_temperatures()[SENSOR][SENSOR_INDEX].current)
     except KeyError:
         temp_sensor = get_cpu_temperature()
-    if DEVICES[CUR_DEVICE].SIMPLE_MODE:
-        return get_data(value=temp_sensor, mode='simple')
-    else:
-        return get_data(value=temp_sensor, mode='temp')
+    return temp_sensor
 
 
-def get_utils():
-    if TST_MODE:
-        return get_data(value=randint(0, 100), mode='util')
-    utils_data = round(psutil.cpu_percent())
-    return get_data(value=utils_data, mode='util')
+def get_usage(is_test: bool = False):
+    if is_test:
+        return randint(0, 100)
+
+    return round(psutil.cpu_percent())
 
 
 try:
@@ -164,21 +168,19 @@ try:
     hidDevice.open(DEVICES[CUR_DEVICE].VENDOR_ID, DEVICES[CUR_DEVICE].PRODUCT_ID)
     hidDevice.set_nonblocking(1)
     if not DEVICES[CUR_DEVICE].SIMPLE_MODE:
-        hidDevice.write(get_data(mode="start"))
+        hidDevice.write(get_data_complex(mode="start"))
     while True:
-        if DEVICES[CUR_DEVICE].SIMPLE_MODE == "simple":
-            temp = get_temperature()
-            b = bytearray()
-            b.extend(map(ord, f"_HLXDATA({temp},{temp},0,0,C)"))
-            hidDevice.write(b)
+        if DEVICES[CUR_DEVICE].SIMPLE_MODE:
+            data = get_data_simple(usage=get_usage(TST_MODE), temp_c=get_temperature(TST_MODE))
+            hidDevice.write(data)
             time.sleep(INTERVAL)
             continue
 
         hidDevice.set_nonblocking(1)
-        temp = get_temperature()
+        temp = get_data_complex(value=get_temperature(TST_MODE), mode='temp')
         hidDevice.write(temp)
         time.sleep(INTERVAL)
-        utils = get_utils()
+        utils = get_data_complex(value=get_usage(TST_MODE), mode='util')
         hidDevice.write(utils)
         time.sleep(INTERVAL)
 except IOError as ex:

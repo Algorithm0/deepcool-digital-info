@@ -7,6 +7,12 @@ import click
 print("Hello! This script should help you configure the program.")
 print("It is recommended to run the script with superuser rights to ensure that he has access to the necessary "
       "packages, as well as access to USB devices.")
+if click.confirm("If you have already installed this, then it is recommended to stop the deepcool-temp service. Stop "
+                 "the service?", default=True):
+    subprocess.run(["systemctl", "stop", "deepcool-temp"])
+    print("If you see an error that this service is not detected, then don’t worry, it just doesn’t exist in your "
+          "system yet.")
+
 if not click.confirm("Let's try. First, all necessary Python packages will be checked. Begin?", default=True):
     print("Okay, let's continue next time!")
     exit(0)
@@ -115,7 +121,7 @@ base_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'deepcool-
 check = False
 if selected != index:
     running_procs = Popen(
-        [base_script, "-j", f"{json_devices_file}", "-d", f"{json_devices["devices"][selected - 1]["name"]}", "-t"])
+        [base_script, "-j", json_devices_file, "-d", f"{json_devices['devices'][selected - 1]['name']}", "-t"])
     check = click.confirm("Wait a little and see what's wrong with your device. Do you see that it shows some random "
                           "data?", default=True)
     running_procs.kill()
@@ -152,12 +158,12 @@ def tryDevice():
         selectedMode = selectNum(2, 'Please select (enter 0 to exit)')
         if selectedMode == 2:
             running_procs = Popen(
-                [base_script, "-v", f"{device_list[selectedHid - 1]['vendor_id']}", "-p",
-                 f"{device_list[selectedHid - 1]['product_id']}", "-t", "-m"])
+                [base_script, "-v", str(device_list[selectedHid - 1]['vendor_id']), "-p",
+                 str(device_list[selectedHid - 1]['product_id']), "-t", "-m"])
         else:
             running_procs = Popen(
-                [base_script, "-v", f"{device_list[selectedHid - 1]['vendor_id']}", "-p",
-                 f"{device_list[selectedHid - 1]['product_id']}", "-t"])
+                [base_script, "-v", str(device_list[selectedHid - 1]['vendor_id']), "-p",
+                 str(device_list[selectedHid - 1]['product_id']), "-t"])
         check = click.confirm(
             "Wait a little and see what's wrong with your device. Do you see that it shows some random "
             "data?", default=True)
@@ -245,8 +251,8 @@ TARGET_ARGS.append(f"{sensor_index}")
 if reedCustom:
     TARGET_ARGS.append("-u")
 
-if click.confirm("And so, it seems we are ready to install! Call the uninstall script? This will be a good idea if you are using "
-      "an older version of the installation.", default=False):
+if click.confirm("And so, it seems we are ready to install! Call the uninstall script? This will be a good idea if "
+                 "you are using an older version of the installation.", default=False):
     remove_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'remove.sh'))
     subprocess.run([remove_script])
     print("Done.")
