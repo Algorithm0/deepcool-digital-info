@@ -77,13 +77,13 @@ if not modulesOk:
     exit(1)
 
 
-def selectNum(max, text):
+def selectNum(maximum: int, text, default: int = None):
     while True:
-        selected = click.prompt(text, type=int)
+        selected = click.prompt(text, type=int, default=default)
         if selected == 0:
             print("Bye!")
             exit(0)
-        if 1 <= selected <= max:
+        if 1 <= selected <= maximum:
             break
         else:
             print("Error:", selected, "is not a valid variant.")
@@ -248,6 +248,12 @@ TARGET_ARGS.append("-s")
 TARGET_ARGS.append(sensor)
 TARGET_ARGS.append("-z")
 TARGET_ARGS.append(f"{sensor_index}")
+
+TARGET_ARGS.append("-i")
+interval = selectNum(60, 'Now enter the data output interval in seconds '
+                         '(maximum - 60, 0 - to exit the configurator)', 2)
+TARGET_ARGS.append(f"{interval}")
+
 if reedCustom:
     TARGET_ARGS.append("-u")
 
@@ -257,12 +263,21 @@ if click.confirm("And so, it seems we are ready to install! Call the uninstall s
     subprocess.run([remove_script])
     print("Done.")
 
-if click.confirm("Now let's run the installation script. Launch?", default=True):
-    install_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'install.sh'))
-    TARGET_ARGS.insert(0, install_script)
-    subprocess.run(TARGET_ARGS)
-    print("Done.")
+if not click.confirm("Now let's run the installation script. Launch?", default=True):
+    print("Okay, next time")
+    print("You can call the installation yourself with your parameters. To do this call:")
+    print("sudo ./install.sh", end=" ")
+    for arg in TARGET_ARGS:
+        print(arg, end=" ")
+    print()
+    print("Bye!")
+    exit(0)
 
+
+install_script = os.path.abspath(os.path.join(os.path.dirname(__file__), 'install.sh'))
+TARGET_ARGS.insert(0, install_script)
+subprocess.run(TARGET_ARGS)
+print("Done.")
 print("If you see any errors during the uninstallation and installation run, then don’t worry - most likely these are "
       "just attempts to remove something that doesn’t exist.")
 print("This completes the setup. Enjoy using it!")
