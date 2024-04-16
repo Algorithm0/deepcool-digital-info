@@ -9,6 +9,7 @@ The number of supported devices is expanding with the help of the community, so 
 - `hidapi`
 - `psutil`
 - `json5`
+- `subprocess`
 
 ### Configurator
 - `stat`
