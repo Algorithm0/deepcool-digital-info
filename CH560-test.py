@@ -14,10 +14,8 @@
 from deepcool import *
 
 # Constant data
-# VENDOR_ID = 0x3633
-# PRODUCT_ID = 0x0005
-VENDOR_ID = 0x34d3
-PRODUCT_ID = 0x1100
+VENDOR_ID = 0x3633
+PRODUCT_ID = 0x0005
 BEGIN_SECOND_DATA = 6
 
 # Varible data
