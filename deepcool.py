@@ -15,11 +15,16 @@ class DeviceInfo:
         self.SIMPLE_MODE = simple_mode
 
 
-def get_bar_value(input_value):
-    return (input_value - 1) // 10 + 1
+def get_bar_value(input_value: int) -> int:
+    if input_value <= 0:
+        return 0
+    if input_value >= 99:
+        return 10
+
+    return round(input_value, -1) // 10
 
 
-def сelsius_to_fahrenheit(input_value):
+def celsius_to_fahrenheit(input_value):
     return round(input_value * 1.8 + 32)
 
 
@@ -29,18 +34,20 @@ class ComplexDataType(Enum):
     usage = 2
 
 
-def get_data_complex(value=0, mode: ComplexDataType = ComplexDataType.usage):
-    base_data = [16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    numbers = [int(char) for char in str(value)]
-    base_data[2] = get_bar_value(value)
-    if mode == ComplexDataType.usage:
-        base_data[1] = 76
-    elif mode == ComplexDataType.start:
+def get_data_complex(bar_persent: int = 0, value: int = 0, mode: ComplexDataType = ComplexDataType.usage):
+    base_data = [0] * 64
+    base_data[0] = 16
+
+    if mode == ComplexDataType.start:
         base_data[1] = 170
         return base_data
+    elif mode == ComplexDataType.usage:
+        base_data[1] = 76
     elif mode == ComplexDataType.temp:
         base_data[1] = 19
+
+    base_data[2] = get_bar_value(bar_persent)
+    numbers = [int(char) for char in str(value)]
     if len(numbers) == 1:
         base_data[5] = numbers[0]
     elif len(numbers) == 2:
@@ -50,37 +57,32 @@ def get_data_complex(value=0, mode: ComplexDataType = ComplexDataType.usage):
         base_data[3] = numbers[0]
         base_data[4] = numbers[1]
         base_data[5] = numbers[2]
-    elif len(numbers) == 4:
-        base_data[3] = numbers[0]
-        base_data[4] = numbers[1]
-        base_data[5] = numbers[2]
-        base_data[6] = numbers[3]
     return base_data
 
 
-def get_data_simple(usage: int = 0, temp_c: int = 0, use_fahrenheit: bool = False):
+def get_data_simple(bar_persent: int = 0, temp_c: int = 0, use_fahrenheit: bool = False):
     simple_data = bytearray()
     if use_fahrenheit:
-        simple_data.extend(map(ord, f"_HLXDATA({usage},{сelsius_to_fahrenheit(temp_c)},0,0,F)"))
+        simple_data.extend(map(ord, f"_HLXDATA({bar_persent},{celsius_to_fahrenheit(temp_c)},0,0,F)"))
     else:
-        simple_data.extend(map(ord, f"_HLXDATA({usage},{temp_c},0,0,C)"))
+        simple_data.extend(map(ord, f"_HLXDATA({bar_persent},{temp_c},0,0,C)"))
     return simple_data
 
 
 class GpuVendor(Enum):
     unknown = 0,
-    nvidia = 1
+    nvidia_prop = 1
 
 
 def get_gpu_temperature(gpu_vendor: GpuVendor = GpuVendor.unknown):
     if gpu_vendor == GpuVendor.unknown:
         return 0
 
-    if gpu_vendor == GpuVendor.nvidia:
+    if gpu_vendor == GpuVendor.nvidia_prop:
         try:
             return int(subprocess.check_output(['nvidia-smi', '--query-gpu=temperature.gpu', '--format=csv,noheader']))
         except Exception as e:
-            print("Error from call Nvidia GPU temp:", e)
+            print("Error call 'nvidia-smi' command:", e)
             print("Return 0")
             return 0
 
@@ -89,14 +91,14 @@ def get_gpu_usage(gpu_vendor: GpuVendor = GpuVendor.unknown):
     if gpu_vendor == GpuVendor.unknown:
         return 0
 
-    if gpu_vendor == GpuVendor.nvidia:
+    if gpu_vendor == GpuVendor.nvidia_prop:
         try:
             data_gpu_usage = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.total,memory.used',
                                                       '--format=csv,noheader,nounits']).decode('UTF-8')
             split_data = data_gpu_usage.split(", ")
             return round(int(split_data[1]) * 100 / int(split_data[0]))
         except Exception as e:
-            print("Error from call Nvidia GPU temp:", e)
+            print("Error call 'nvidia-smi' command:", e)
             print("Return 0")
             return 0
 
@@ -132,6 +134,8 @@ if __name__ == "__main__":
     SENSOR = 'k10temp'
     SENSOR_INDEX = 0
     INTERVAL = 1
+    COMPLEX_INTERVAL = INTERVAL
+    GPU_VENDOR = GpuVendor.unknown
 
     DEVICES = {
         "CH510": DeviceInfo(vendor_id=0x34d3, product_id=0x1100, simple_mode=True),
@@ -150,6 +154,9 @@ if __name__ == "__main__":
                         help='select your device name in json (--json-devices req)', default=CUR_DEVICE)
     parser.add_argument('-i', '--interval', type=int, nargs='?', help='display refresh timing in seconds',
                         default=INTERVAL)
+    parser.add_argument('--complex-interval', type=int, nargs='?', help='display refresh timing in seconds between '
+                                                                        'temperature and use (only for complex mode)',
+                        default=COMPLEX_INTERVAL)
     parser.add_argument('-j', '--json-devices', nargs='?',
                         help='path to the device configuration file in the form of a '
                              'json-file', default=None)
@@ -167,13 +174,27 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--product', type=lambda x: int(x, 0), nargs='?',
                         help="provide a specific PRODUCT_ID (if your device is listed, "
                              "don't worry about it)", default=None)
+    parser.add_argument('-g', '--use-gpu',
+                        action='store_true', help="Display information about the NVIDIA GPU "
+                                                  "instead of the CPU (only the proprietary driver "
+                                                  "is supported). Some flags that are responsible "
+                                                  "for setting the temperature sensor will be "
+                                                  "ignored.")
+    parser.add_argument('--disable-temp', action='store_false', help="Turns off the temperature display (only for "
+                                                                     "complex mode)")
+    parser.add_argument('--disable-usage', action='store_false', help="Turns off usage display (complex mode only)")
 
     args = parser.parse_args()
     INTERVAL = args.interval
+    COMPLEX_INTERVAL = args.complex_interval
     SENSOR = args.sensor
     SENSOR_INDEX = args.sensor_index
     CUR_DEVICE = args.device
     TST_MODE = args.test
+    COMPLEX_SHOW_TEMP = args.disable_temp
+    COMPLEX_SHOW_USAGE = args.disable_usage
+    if args.use_gpu:
+        GPU_VENDOR = GpuVendor.nvidia_prop
 
     if args.json_devices is not None:
         custom_device = DEVICES["CUSTOM"]
@@ -209,22 +230,27 @@ if __name__ == "__main__":
         if not DEVICES[CUR_DEVICE].SIMPLE_MODE:
             hidDevice.write(get_data_complex(mode=ComplexDataType.start))
         while True:
-            if DEVICES[CUR_DEVICE].SIMPLE_MODE:
-                data = get_data_simple(usage=get_usage(TST_MODE),
-                                       temp_c=get_temperature(is_test=TST_MODE, sensor=SENSOR,
-                                                              sensor_index=SENSOR_INDEX))
-                hidDevice.write(data)
-                time.sleep(INTERVAL)
-                continue
+            usage_now = get_usage(is_test=TST_MODE, gpu_vendor=GPU_VENDOR)
+            temp_now = get_temperature(is_test=TST_MODE, sensor=SENSOR, sensor_index=SENSOR_INDEX,
+                                       gpu_vendor=GPU_VENDOR)
 
-            hidDevice.set_nonblocking(1)
-            temp = get_data_complex(value=get_temperature(is_test=TST_MODE, sensor=SENSOR,
-                                                          sensor_index=SENSOR_INDEX),
-                                    mode=ComplexDataType.temp)
-            hidDevice.write(temp)
-            time.sleep(INTERVAL)
-            utils = get_data_complex(value=get_usage(TST_MODE), mode=ComplexDataType.usage)
-            hidDevice.write(utils)
+            if DEVICES[CUR_DEVICE].SIMPLE_MODE:
+                data = get_data_simple(bar_persent=usage_now, temp_c=temp_now)
+                hidDevice.write(data)
+            else:
+                hidDevice.set_nonblocking(1)
+                if COMPLEX_SHOW_TEMP:
+                    temp_data = get_data_complex(bar_persent=usage_now, value=temp_now, mode=ComplexDataType.temp)
+                    hidDevice.write(temp_data)
+
+                if COMPLEX_SHOW_TEMP and COMPLEX_SHOW_USAGE:
+                    time.sleep(COMPLEX_INTERVAL)
+                    usage_now = get_usage(is_test=TST_MODE, gpu_vendor=GPU_VENDOR)
+
+                if COMPLEX_SHOW_USAGE:
+                    usage_data = get_data_complex(bar_persent=usage_now, value=usage_now, mode=ComplexDataType.usage)
+                    hidDevice.write(usage_data)
+
             time.sleep(INTERVAL)
     except IOError as ex:
         print(ex)
