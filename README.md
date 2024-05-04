@@ -41,13 +41,15 @@ Carefully monitor the output of the configurator when setting up your equipment.
 - [x] Displays CPU temperature on tested devices
 - [x] Displays CPU usage information on tested devices
 - [ ] Displays GPU temperature on tested devices
+  - [x] Nvidia (proprietary driver with `nvidia-smi`)
 - [ ] Displays GPU usage information on tested devices
+  - [x] Nvidia (proprietary driver with `nvidia-smi`)
 - [x] Launches when the computer starts up
 - [x] Restarts after sleep
 - [ ] Works with multiple devices
 - [ ] Has a visual interface
 - [ ] Can display temperature in Fahrenheit
-- [ ] Allows you to configure usage/temperature switching
+- [x] Allows you to configure usage/temperature switching
 
 ## What devices are supported?
 Unfortunately, it is impossible to try the configuration of a particular device without having it in hand. 
