@@ -209,8 +209,9 @@ if __name__ == "__main__":
         with open(args.json_devices) as f:
             json_devices = json5.load(f)
             try:
-                for device in json_devices["devices"]:
-                    DEVICES[device["name"]] = DeviceInfo(device["vendor_id"], device["product_id"], device["simple"])
+                for device in json_devices:
+                    DEVICES[device] = DeviceInfo(json_devices[device]["vendor_id"], json_devices[device]["product_id"],
+                                                 json_devices[device]["simple"])
             except KeyError:
                 print("Device configuration file has wrong format")
                 exit(1)

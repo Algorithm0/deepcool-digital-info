@@ -1,40 +1,32 @@
 {
-  "devices": [
-    {
-      "name": "CH510",
-      "vendor_id": 0x34d3,
-      "product_id": 0x1100,
-      "simple": true
-    },
-    {
-      "name": "AK400",
-      "vendor_id": 0x3633,
-      "product_id": 0x0001,
-      "simple": false
-    },
-    {
-      "name": "AK620",
-      "vendor_id": 0x3633,
-      "product_id": 0x0002,
-      "simple": false
-    },
-    {
-      "name": "AK500",
-      "vendor_id": 0x3633,
-      "product_id": 0x0003,
-      "simple": false
-    },
-    {
-      "name": "AK500S",
-      "vendor_id": 0x3633,
-      "product_id": 0x0004,
-      "simple": false
-    },
-    {
-      "name": "CH560",         // Limited support (second screen for GPU does not function)
-      "vendor_id": 0x3633,
-      "product_id": 0x0005,
-      "simple": false
-    }
-  ]
+  "CH510": {
+    "vendor_id": 0x34d3,
+    "product_id": 0x1100,
+    "simple": true
+  },
+  "AK400": {
+    "vendor_id": 0x3633,
+    "product_id": 0x0001,
+    "simple": false
+  },
+  "AK620": {
+    "vendor_id": 0x3633,
+    "product_id": 0x0002,
+    "simple": false
+  },
+  "AK500": {
+    "vendor_id": 0x3633,
+    "product_id": 0x0003,
+    "simple": false
+  },
+  "AK500S": {
+    "vendor_id": 0x3633,
+    "product_id": 0x0004,
+    "simple": false
+  },
+  "CH560": { // Limited support (second screen for GPU does not function)
+    "vendor_id": 0x3633,
+    "product_id": 0x0005,
+    "simple": false
+  }
 }
