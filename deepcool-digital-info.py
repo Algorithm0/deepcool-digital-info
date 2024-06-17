@@ -23,6 +23,7 @@ DEVICES = {
     "CH510": DeviceInfo(vendor_id=0x34d3, product_id=0x1100, simple_mode=True),
     "AK620": DeviceInfo(vendor_id=0x3633, product_id=0x0002, simple_mode=False),
     "AK400": DeviceInfo(vendor_id=0x3633, product_id=0x0001, simple_mode=False),
+    "AG400": DeviceInfo(vendor_id=0x3633, product_id=0x0008, simple_mode=False),
     "CUSTOM": DeviceInfo(vendor_id=0x0, product_id=0x0000, simple_mode=False)
 }
 
@@ -124,6 +125,16 @@ def get_data_complex(value=0, mode='util'):
         base_data[4] = numbers[1]
         base_data[5] = numbers[2]
         base_data[6] = numbers[3]
+    # AG400
+    # moving [16, 19, 5, 0, 4, 5, ....]
+    # to     [16, 19, 5, 4, 5, 0, ....]
+    if CUR_DEVICE == "AG400":
+        temp_first_digit = base_data[4]
+        temp_second_digit = base_data[5]
+
+        base_data[5] = base_data[3]
+        base_data[3] = temp_first_digit
+        base_data[4] = temp_second_digit
     return base_data
 
 
