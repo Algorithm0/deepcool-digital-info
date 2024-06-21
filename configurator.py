@@ -1,9 +1,8 @@
 #!/bin/python3
 import stat
+import click
 import subprocess
 from subprocess import Popen
-import click
-import deepcool
 
 print("Hello! This script should help you configure the program.")
 print("It is recommended to run the script with superuser rights to ensure that he has access to the necessary "
@@ -92,6 +91,9 @@ def selectNum(maximum: int, text, default: int = None):
 
 
 print("All modules are installed! Great! Well, let's now try to identify your device!")
+
+import deepcool
+
 json_devices_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'user-devices.json5'))
 reedCustom = os.path.isfile(json_devices_file)
 json_devices = None
