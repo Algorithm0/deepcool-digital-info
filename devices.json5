@@ -28,5 +28,10 @@
     "vendor_id": 0x3633,
     "product_id": 0x0005,
     "simple": false
+  },
+  "AG400": {
+    "vendor_id": 0x3633,
+    "product_id": 0x0008,
+    "simple": false
   }
 }
