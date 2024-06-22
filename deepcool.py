@@ -38,8 +38,11 @@ def parse_devices_file(devices_file: str) -> dict[str, DeviceInfo]:
                 use_shift = False
                 if "use_shift" in json_devices[device]:
                     use_shift = json_devices[device]["use_shift"]
-                devices[device] = DeviceInfo(json_devices[device]["vendor_id"], json_devices[device]["product_id"],
-                                             json_devices[device]["simple"], use_shift)
+                simple_mode = False
+                if "simple" in json_devices[device]:
+                    simple_mode = json_devices[device]["simple"]
+                devices[device] = DeviceInfo(vendor_id=json_devices[device]["vendor_id"], product_id=json_devices[device]["product_id"],
+                                             simple_mode=simple_mode, shift=use_shift)
         except KeyError:
             print("Device configuration file has wrong format")
     return devices
@@ -47,8 +50,8 @@ def parse_devices_file(devices_file: str) -> dict[str, DeviceInfo]:
 
 class Configuration:
     device: DeviceInfo = DeviceInfo(vendor_id=0x0, product_id=0x0000)
-    interval: int = 1
-    complex_interval: int = 1
+    interval: int = 2
+    complex_interval: int = 2
     gpu_vendor: GpuVendor = GpuVendor.unknown
     sensor: str = 'k10temp'
     sensor_index: int = 0
