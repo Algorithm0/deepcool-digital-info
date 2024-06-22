@@ -88,6 +88,8 @@ class Configuration:
                 self.interval = json_config["interval"]
             if "complex-interval" in json_config:
                 self.complex_interval = json_config["complex-interval"]
+            else:
+                self.complex_interval = self.interval
             if "use-gpu" in json_config:
                 self.gpu_vendor = GpuVendor.nvidia_prop
             if "sensor" in json_config:
@@ -217,6 +219,50 @@ def get_usage(is_test: bool = False, gpu_vendor: GpuVendor = GpuVendor.unknown):
     return get_gpu_usage(gpu_vendor)
 
 
+def run_deepcool_service(config: Configuration, tst_mode: bool = False):
+    try:
+        hid_device = hid.device()
+        hid_device.open(config.device.VENDOR_ID, config.device.PRODUCT_ID)
+        hid_device.set_nonblocking(1)
+        if not config.device.SIMPLE_MODE:
+            hid_device.write(get_data_complex(mode=ComplexDataType.start))
+        while True:
+            usage_now = get_usage(is_test=tst_mode, gpu_vendor=config.gpu_vendor)
+            temp_now = get_temperature(is_test=tst_mode, sensor=config.sensor,
+                                       sensor_index=config.sensor_index,
+                                       gpu_vendor=config.gpu_vendor)
+
+            if config.device.SIMPLE_MODE:
+                data = get_data_simple(bar_persent=usage_now, temp_c=temp_now)
+                hid_device.write(data)
+            else:
+                hid_device.set_nonblocking(1)
+                if config.complex_show_temp:
+                    temp_data = get_data_complex(bar_percent=usage_now, value=temp_now, mode=ComplexDataType.temp,
+                                                 use_shift=config.device.USE_SHIFT)
+                    hid_device.write(temp_data)
+
+                if config.complex_show_temp and config.complex_show_usage:
+                    time.sleep(config.complex_interval)
+                    usage_now = get_usage(is_test=tst_mode, gpu_vendor=config.gpu_vendor)
+
+                if config.complex_show_usage:
+                    usage_data = get_data_complex(bar_percent=usage_now, value=usage_now, mode=ComplexDataType.usage)
+                    hid_device.write(usage_data)
+
+            time.sleep(config.interval)
+    except IOError as ex:
+        print(ex)
+        print(
+            "Failed to open device for writing. Either you are using the wrong device (incorrect VENDOR_ID/PRODUCT_ID),"
+            "or you need superuser rights.")
+    except KeyboardInterrupt:
+        print("\nScript terminated by user.")
+    finally:
+        if 'hidDevice' in locals():
+            hid_device.close()
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -268,7 +314,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    TST_MODE = args.test
     if args.config is not None:
         configuration.from_json(json_config_file=args.config)
 
@@ -294,44 +339,4 @@ if __name__ == "__main__":
     if args.use_shift is not None:
         configuration.device.USE_SHIFT = args.use_shift
 
-    try:
-        hidDevice = hid.device()
-        hidDevice.open(configuration.device.VENDOR_ID, configuration.device.PRODUCT_ID)
-        hidDevice.set_nonblocking(1)
-        if not configuration.device.SIMPLE_MODE:
-            hidDevice.write(get_data_complex(mode=ComplexDataType.start))
-        while True:
-            usage_now = get_usage(is_test=TST_MODE, gpu_vendor=configuration.gpu_vendor)
-            temp_now = get_temperature(is_test=TST_MODE, sensor=configuration.sensor,
-                                       sensor_index=configuration.sensor_index,
-                                       gpu_vendor=configuration.gpu_vendor)
-
-            if configuration.device.SIMPLE_MODE:
-                data = get_data_simple(bar_persent=usage_now, temp_c=temp_now)
-                hidDevice.write(data)
-            else:
-                hidDevice.set_nonblocking(1)
-                if configuration.complex_show_temp:
-                    temp_data = get_data_complex(bar_percent=usage_now, value=temp_now, mode=ComplexDataType.temp,
-                                                 use_shift=configuration.device.USE_SHIFT)
-                    hidDevice.write(temp_data)
-
-                if configuration.complex_show_temp and configuration.complex_show_usage:
-                    time.sleep(configuration.complex_interval)
-                    usage_now = get_usage(is_test=TST_MODE, gpu_vendor=configuration.gpu_vendor)
-
-                if configuration.complex_show_usage:
-                    usage_data = get_data_complex(bar_percent=usage_now, value=usage_now, mode=ComplexDataType.usage)
-                    hidDevice.write(usage_data)
-
-            time.sleep(configuration.interval)
-    except IOError as ex:
-        print(ex)
-        print(
-            "Failed to open device for writing. Either you are using the wrong device (incorrect VENDOR_ID/PRODUCT_ID),"
-            "or you need superuser rights.")
-    except KeyboardInterrupt:
-        print("\nScript terminated by user.")
-    finally:
-        if 'hidDevice' in locals():
-            hidDevice.close()
+    run_deepcool_service(config=configuration, tst_mode=args.test)
