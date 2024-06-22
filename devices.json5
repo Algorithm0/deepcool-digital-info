@@ -32,6 +32,7 @@
   "AG400": {
     "vendor_id": 0x3633,
     "product_id": 0x0008,
-    "simple": false
+    "simple": false,
+    "use_shift": true
   }
 }
