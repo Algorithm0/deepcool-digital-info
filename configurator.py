@@ -274,7 +274,7 @@ TARGET_ARGS.append(f"{interval}")
 
 if option == 3:
     TARGET_ARGS.append("-hld")
-    hold = selectNum(60, 'Now enter output switching interval in seconds'
+    hold = selectFloat(60, 'Now enter output switching interval in seconds'
                          '(min - 1, max - 60, 0 - to exit the configurator)', 10)
     TARGET_ARGS.append(f"{hold}")
 
