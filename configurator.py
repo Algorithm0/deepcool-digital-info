@@ -263,7 +263,7 @@ TARGET_ARGS.append("-z")
 TARGET_ARGS.append(f"{sensor_index}")
 
 TARGET_ARGS.append("-o")
-option = selectNum(3, 'Now enter what data to display '
+option = selectNum(3, 'Now enter type of data to display '
                          '(temp - 1, usage - 2, both - 3, 0 - to exit the configurator)', 3)
 TARGET_ARGS.append(f"{option}")
 
@@ -271,6 +271,12 @@ TARGET_ARGS.append("-i")
 interval = selectFloat(60, 'Now enter the data output interval in seconds '
                          '(min - 0.1, max - 60, 0 - to exit the configurator)', 1)
 TARGET_ARGS.append(f"{interval}")
+
+if option == 3:
+    TARGET_ARGS.append("-hld")
+    hold = selectNum(60, 'Now enter output switching interval in seconds'
+                         '(min - 1, max - 60, 0 - to exit the configurator)', 10)
+    TARGET_ARGS.append(f"{hold}")
 
 if reedCustom:
     TARGET_ARGS.append("-u")
