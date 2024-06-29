@@ -90,6 +90,19 @@ def selectNum(maximum: int, text, default: int = None):
     return selected
 
 
+def selectFloat(maximum: float, text, default: float = 1):
+    while True:
+        selected = click.prompt(text, type=float, default=default)
+        if selected == 0:
+            print("Bye!")
+            exit(0)
+        if 0.100 <= selected <= maximum:
+            break
+        else:
+            print("Error:", selected, "is too low.")
+    return selected
+
+
 print("All modules are installed! Great! Well, let's now try to identify your device!")
 json_devices_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'user-devices.json5'))
 reedCustom = os.path.isfile(json_devices_file)
@@ -249,10 +262,21 @@ TARGET_ARGS.append(sensor)
 TARGET_ARGS.append("-z")
 TARGET_ARGS.append(f"{sensor_index}")
 
+TARGET_ARGS.append("-o")
+option = selectNum(3, 'Now enter type of data to display '
+                         '(temp - 1, usage - 2, both - 3, 0 - to exit the configurator)', 3)
+TARGET_ARGS.append(f"{option}")
+
 TARGET_ARGS.append("-i")
-interval = selectNum(60, 'Now enter the data output interval in seconds '
-                         '(maximum - 60, 0 - to exit the configurator)', 2)
+interval = selectFloat(60, 'Now enter the data output interval in seconds '
+                         '(min - 0.1, max - 60, 0 - to exit the configurator)', 1)
 TARGET_ARGS.append(f"{interval}")
+
+if option == 3:
+    TARGET_ARGS.append("-hld")
+    hold = selectFloat(60, 'Now enter output switching interval in seconds'
+                         '(min - 1, max - 60, 0 - to exit the configurator)', 10)
+    TARGET_ARGS.append(f"{hold}")
 
 if reedCustom:
     TARGET_ARGS.append("-u")

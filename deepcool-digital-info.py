@@ -9,7 +9,9 @@ import argparse
 CUR_DEVICE = "CUSTOM"
 SENSOR = 'k10temp'
 SENSOR_INDEX = 0
+OPTION = 3
 INTERVAL = 1
+HOLD = 10
 
 
 class DeviceInfo:
@@ -35,7 +37,9 @@ parser = argparse.ArgumentParser(
                 'device')
 parser.add_argument('-d', '--device', nargs='?',
                     help='select your device name in json (--json-devices req)', default=CUR_DEVICE)
-parser.add_argument('-i', '--interval', type=int, nargs='?', help='display refresh timing in seconds', default=INTERVAL)
+parser.add_argument('-o', '--option', type=int, nargs='?', help='display temp or util', default=OPTION)
+parser.add_argument('-i', '--interval', type=float, nargs='?', help='display refresh timing in seconds', default=INTERVAL)
+parser.add_argument('-hld', '--hold', type=float, nargs='?', help='display switch timing in seconds', default=HOLD)
 parser.add_argument('-j', '--json-devices', nargs='?', help='path to the device configuration file in the form of a '
                                                             'json-file', default=None)
 parser.add_argument('-s', '--sensor', default=SENSOR, nargs='?', type=str)
@@ -54,7 +58,9 @@ parser.add_argument('-p', '--product', type=lambda x: int(x, 0), nargs='?',
                          "don't worry about it)", default=None)
 
 args = parser.parse_args()
+OPTION = args.option
 INTERVAL = args.interval
+HOLD = args.hold
 SENSOR = args.sensor
 SENSOR_INDEX = args.sensor_index
 CUR_DEVICE = args.device
@@ -188,12 +194,20 @@ try:
             continue
 
         hidDevice.set_nonblocking(1)
-        temp = get_data_complex(value=get_temperature(TST_MODE), mode='temp')
-        hidDevice.write(temp)
-        time.sleep(INTERVAL)
-        utils = get_data_complex(value=get_usage(TST_MODE), mode='util')
-        hidDevice.write(utils)
-        time.sleep(INTERVAL)
+        if OPTION in (1, 3):
+            holdtemp = HOLD
+            while holdtemp >= INTERVAL:
+                temp = get_data_complex(value=get_temperature(TST_MODE), mode='temp')
+                hidDevice.write(temp)
+                holdtemp -= INTERVAL
+                time.sleep(INTERVAL)
+        if OPTION in (2, 3):
+            holdutils = HOLD
+            while holdutils >= INTERVAL:
+                utils = get_data_complex(value=get_usage(TST_MODE), mode='util')
+                hidDevice.write(utils)
+                holdutils -= INTERVAL
+                time.sleep(INTERVAL)
 except IOError as ex:
     print(ex)
     print("Failed to open device for writing. Either you are using the wrong device (incorrect VENDOR_ID/PRODUCT_ID), "
